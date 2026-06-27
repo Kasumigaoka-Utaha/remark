@@ -425,7 +425,7 @@ export default function Home() {
   function startNextOrder() {
     setRating(null);
     setSessionKey((current) => current + 1);
-    setView("chat");
+    setView("classic");
   }
 
   if (view === "chat") {
