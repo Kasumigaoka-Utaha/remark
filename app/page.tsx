@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Camera, ChevronDown, Image as ImageIcon, Mic, Send, Star, X } from "lucide-react";
 import Image from "next/image";
-import { ChangeEvent, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 
 type View = "classic" | "chat" | "success";
 
@@ -10,7 +10,7 @@ type ChatMessage = {
   id: string;
   role: "assistant" | "user";
   text: string;
-  kind?: "prompt" | "system" | "media";
+  kind?: "prompt" | "system" | "media" | "rating";
 };
 
 type CheckResponse = {
@@ -44,16 +44,20 @@ const products = [
   }
 ];
 
-const initialPrompt = "这次整体体验怎么样？可以先给这单打个分，也可以直接写下真实感受。";
+const initialPrompt = "先给这单打个分吧，我会根据评分继续问几个细节。";
 
 function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function ratingFollowup(value: number) {
-  if (value <= 2) return "主要是哪方面不满意？可以直接写，比如尺码、质量、物流。";
-  if (value === 3) return "哪些地方一般？可以说说尺码、面料或上身效果。";
-  return "具体哪里还不错？可以直接写，比如尺码、面料、上身效果。";
+  if (value <= 2) return "主要是哪方面不满意？可以说说尺码、质量、物流，或者实际收到后的感受。";
+  if (value === 3) return "哪些地方一般？可以说说尺码、面料、颜色或上身效果。";
+  return "你觉得哪里最值得推荐？可以说说面料、版型、尺码或上身效果。";
+}
+
+function ratingMessage(value: number) {
+  return `${value}星 ${ratingLabels[value - 1]}`;
 }
 
 function RatingPicker({
@@ -73,7 +77,7 @@ function RatingPicker({
         return (
           <button
             type="button"
-            aria-label={label}
+            aria-label={`${rating}星 ${label}`}
             className={active ? "ratingButton ratingActive" : "ratingButton"}
             key={label}
             onClick={() => onChange(rating)}
@@ -97,10 +101,18 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ProductCard({ collapsed = false, productIndex = 0 }: { collapsed?: boolean; productIndex?: number }) {
+function ProductCard({
+  collapsed = false,
+  productIndex = 0,
+  className = ""
+}: {
+  collapsed?: boolean;
+  productIndex?: number;
+  className?: string;
+}) {
   const product = products[productIndex];
   return (
-    <div className={collapsed ? "product productCollapsed" : "product"}>
+    <div className={`${collapsed ? "product productCollapsed" : "product"} ${className}`.trim()}>
       <div className="productThumb">
         <Image src={product.image} width={60} height={76} alt={product.title} priority />
       </div>
@@ -116,11 +128,13 @@ function ProductCard({ collapsed = false, productIndex = 0 }: { collapsed?: bool
 function ClassicPage({
   rating,
   setRating,
-  onEnterChat
+  onEnterChat,
+  onSuccess
 }: {
   rating: number | null;
   setRating: (value: number) => void;
   onEnterChat: () => void;
+  onSuccess: () => void;
 }) {
   const [reviewText, setReviewText] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -170,8 +184,8 @@ function ClassicPage({
         </div>
       </section>
       <div className="bottomCta">
-        <button className="primaryButton" type="button">
-          提交
+        <button className="primaryButton" type="button" onClick={onSuccess}>
+          提交评价
         </button>
       </div>
     </PhoneFrame>
@@ -183,8 +197,8 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={isUser ? "message messageUser" : "message"}>
       {!isUser && (
-        <div className="avatar" aria-hidden="true">
-          小
+        <div className="avatar avatarPhoto" aria-hidden="true">
+          <Image src="/xiaoping-avatar.png" width={34} height={34} alt="" />
         </div>
       )}
       <div className={isUser ? "bubble userBubble" : "bubble"}>
@@ -215,12 +229,8 @@ function ChatPage({
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [isUseful, setIsUseful] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [hasRated, setHasRated] = useState(Boolean(rating));
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const userText = useMemo(
-    () => messages.filter((message) => message.role === "user").map((message) => message.text).join(" "),
-    [messages]
-  );
 
   function addAssistant(text: string, kind: ChatMessage["kind"] = "prompt") {
     setMessages((current) => [...current, { id: createId("assistant"), role: "assistant", text, kind }]);
@@ -228,7 +238,15 @@ function ChatPage({
 
   function handleRating(value: number) {
     setRating(value);
-    addAssistant(ratingFollowup(value));
+    setHasRated(true);
+    setMessages((current) => {
+      const withoutPreviousRating = current.filter((message) => message.kind !== "rating");
+      return [
+        ...withoutPreviousRating,
+        { id: createId("rating"), role: "user", text: ratingMessage(value), kind: "rating" },
+        { id: createId("assistant"), role: "assistant", text: ratingFollowup(value), kind: "prompt" }
+      ];
+    });
   }
 
   async function submitText() {
@@ -247,11 +265,12 @@ function ChatPage({
         body: JSON.stringify({
           sessionId: "demo-session",
           rating,
-          messages: nextMessages.map(({ role, text }) => ({ role, text })),
+          messages: nextMessages.map(({ role, text, kind }) => ({ role, text, kind })),
           hasMedia: Boolean(mediaPreview),
           mediaPromptShown,
           questionRound,
-          categoryId: "apparel"
+          categoryId: "apparel",
+          product: products[0]
         })
       });
       const result = (await response.json()) as CheckResponse;
@@ -262,7 +281,7 @@ function ChatPage({
       }
       addAssistant(result.nextPromptText, result.nextAction === "media_prompt" ? "media" : "prompt");
     } catch {
-      addAssistant("写好了可以直接提交。", "system");
+      addAssistant("我先记下了。你还可以补充尺码、面料或上身效果。", "system");
     } finally {
       setIsChecking(false);
     }
@@ -272,15 +291,7 @@ function ChatPage({
     const file = event.target.files?.[0];
     if (!file) return;
     setMediaPreview(URL.createObjectURL(file));
-    addAssistant("太好了！实物图很有参考，是否还有其他想补充的？", "media");
-  }
-
-  function handleSubmitReview() {
-    if (!userText && !rating) {
-      addAssistant("可以先打个分，或写一句真实感受。也可以直接返回普通写评页。", "system");
-      return;
-    }
-    onSuccess();
+    addAssistant("太好了，实物图很有参考。还可以再补充一下颜色或上身效果。", "media");
   }
 
   return (
@@ -289,17 +300,15 @@ function ChatPage({
         <button className="iconButton" aria-label="返回" onClick={onBack}>
           <ArrowLeft size={22} />
         </button>
-        <h1>和小评聊这单</h1>
-        <button className="ghostButton" type="button" onClick={onBack}>
-          返回
-        </button>
+        <h1>AI写评</h1>
+        <span className="topSpacer" />
       </header>
-      <ProductCard collapsed />
+      <ProductCard collapsed className="chatProduct" />
       <section className="chatScroll">
         {messages.map((message) => (
           <ChatBubble key={message.id} message={message} />
         ))}
-        <div className="inlinePanel">
+        <div className="inlinePanel ratingPanel">
           <span>给这单打个分</span>
           <RatingPicker value={rating} onChange={handleRating} compact />
         </div>
@@ -324,19 +333,25 @@ function ChatPage({
           onKeyDown={(event) => {
             if (event.key === "Enter") submitText();
           }}
-          placeholder="写下你的真实感受"
+          placeholder={hasRated ? "写下你的真实感受" : "先给这单打个分"}
+          disabled={!hasRated}
         />
         <input ref={fileInputRef} className="hiddenInput" type="file" accept="image/*" onChange={handleFileChange} />
         <button className="iconButton" aria-label="添加图片" onClick={() => fileInputRef.current?.click()}>
           <ImageIcon size={22} />
         </button>
-        <button className="sendButton" type="button" onClick={submitText} disabled={!input.trim() || isChecking}>
+        <button className="sendButton" type="button" onClick={submitText} disabled={!hasRated || !input.trim() || isChecking}>
           <Send size={15} />
           发送
         </button>
       </div>
       <div className="bottomCta chatCta">
-        <button className="primaryButton" type="button" onClick={handleSubmitReview}>
+        <button
+          className={hasRated ? "primaryButton" : "primaryButton primaryButtonDisabled"}
+          type="button"
+          onClick={onSuccess}
+          disabled={!hasRated}
+        >
           提交评价
         </button>
       </div>
@@ -358,7 +373,9 @@ function SuccessPage({ onNext }: { onNext: () => void }) {
         <div className="checkmark">✓</div>
         <h2>感谢你的真实分享！</h2>
         <div className="successBubble">
-          <div className="avatar">小</div>
+          <div className="avatar avatarPhoto">
+            <Image src="/xiaoping-avatar.png" width={34} height={34} alt="" />
+          </div>
           <div>
             <strong>小评</strong>
             <p>你的评价已提交成功，你还有 2 个待评价订单，要不要继续聊下一单？</p>
@@ -422,5 +439,12 @@ export default function Home() {
     return <SuccessPage onNext={startNextOrder} />;
   }
 
-  return <ClassicPage rating={rating} setRating={setRating} onEnterChat={() => setView("chat")} />;
+  return (
+    <ClassicPage
+      rating={rating}
+      setRating={setRating}
+      onEnterChat={() => setView("chat")}
+      onSuccess={() => setView("success")}
+    />
+  );
 }
