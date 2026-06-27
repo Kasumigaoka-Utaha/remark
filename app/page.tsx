@@ -35,12 +35,12 @@ const products = [
   {
     title: "简约纯棉圆领T恤",
     meta: "白色 / M码",
-    image: "/dress.svg"
+    image: "/product-tee.jpg"
   },
   {
     title: "轻薄休闲短裤",
     meta: "卡其色 / M码",
-    image: "/shorts.svg"
+    image: "/product-shorts.jpg"
   }
 ];
 
@@ -130,12 +130,14 @@ function ClassicPage({
   rating,
   setRating,
   onEnterChat,
-  onSuccess
+  onSuccess,
+  productIndex
 }: {
   rating: number | null;
   setRating: (value: number) => void;
   onEnterChat: () => void;
   onSuccess: () => void;
+  productIndex: number;
 }) {
   const [reviewText, setReviewText] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -151,7 +153,7 @@ function ClassicPage({
           AI写评
         </button>
       </header>
-      <ProductCard />
+      <ProductCard productIndex={productIndex} />
       <section className="classicBody">
         <div className="sectionTitle">给这单打个分</div>
         <RatingPicker value={rating} onChange={setRating} />
@@ -214,12 +216,14 @@ function ChatPage({
   rating,
   setRating,
   onBack,
-  onSuccess
+  onSuccess,
+  productIndex
 }: {
   rating: number | null;
   setRating: (value: number | null) => void;
   onBack: () => void;
   onSuccess: () => void;
+  productIndex: number;
 }) {
   const [introMessages] = useState<ChatMessage[]>([
     { id: "init", role: "assistant", text: initialPrompt, kind: "prompt" }
@@ -272,7 +276,7 @@ function ChatPage({
           mediaPromptShown,
           questionRound,
           categoryId: "apparel",
-          product: products[0]
+          product: products[productIndex]
         })
       });
       const result = (await response.json()) as CheckResponse;
@@ -305,7 +309,7 @@ function ChatPage({
         <h1>AI写评</h1>
         <span className="topSpacer" />
       </header>
-      <ProductCard collapsed className="chatProduct" />
+      <ProductCard collapsed className="chatProduct" productIndex={productIndex} />
       <section className="chatScroll">
         {introMessages.map((message) => (
           <ChatBubble key={message.id} message={message} />
@@ -364,7 +368,15 @@ function ChatPage({
   );
 }
 
-function SuccessPage({ onNext }: { onNext: () => void }) {
+function SuccessPage({
+  pendingOrderIndexes,
+  onSelectOrder
+}: {
+  pendingOrderIndexes: number[];
+  onSelectOrder: (productIndex: number) => void;
+}) {
+  const nextProductIndex = pendingOrderIndexes[0] ?? 0;
+
   return (
     <PhoneFrame>
       <header className="topbar">
@@ -383,30 +395,33 @@ function SuccessPage({ onNext }: { onNext: () => void }) {
           </div>
           <div>
             <strong>小评</strong>
-            <p>你的评价已提交成功，你还有 2 个待评价订单，要不要继续聊下一单？</p>
+            <p>你的评价已提交成功，你还有 {pendingOrderIndexes.length} 个待评价订单，要不要继续评价下一单？</p>
           </div>
         </div>
       </section>
       <section className="nextOrders">
         <div className="ordersHead">
-          <strong>待评价订单(2)</strong>
+          <strong>待评价订单({pendingOrderIndexes.length})</strong>
           <span>查看全部</span>
         </div>
-        {products.slice(1).map((product) => (
+        {pendingOrderIndexes.map((productIndex) => {
+          const product = products[productIndex];
+          return (
           <div className="orderRow" key={product.title}>
             <Image src={product.image} width={42} height={54} alt={product.title} />
             <span>
               <strong>{product.title}</strong>
               <em>{product.meta}</em>
             </span>
-            <button type="button" onClick={onNext}>
+            <button type="button" onClick={() => onSelectOrder(productIndex)}>
               评价这单
             </button>
           </div>
-        ))}
+          );
+        })}
       </section>
       <div className="bottomCta">
-        <button className="primaryButton" type="button" onClick={onNext}>
+        <button className="primaryButton" type="button" onClick={() => onSelectOrder(nextProductIndex)}>
           去评价下一单
         </button>
         <button className="plainButton" type="button">
@@ -421,8 +436,12 @@ export default function Home() {
   const [view, setView] = useState<View>("classic");
   const [rating, setRating] = useState<number | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
+  const [currentProductIndex, setCurrentProductIndex] = useState(0);
 
-  function startNextOrder() {
+  const pendingOrderIndexes = products.map((_, index) => index).filter((index) => index !== currentProductIndex);
+
+  function startOrder(productIndex: number) {
+    setCurrentProductIndex(productIndex);
     setRating(null);
     setSessionKey((current) => current + 1);
     setView("classic");
@@ -436,12 +455,13 @@ export default function Home() {
         setRating={setRating}
         onBack={() => setView("classic")}
         onSuccess={() => setView("success")}
+        productIndex={currentProductIndex}
       />
     );
   }
 
   if (view === "success") {
-    return <SuccessPage onNext={startNextOrder} />;
+    return <SuccessPage pendingOrderIndexes={pendingOrderIndexes} onSelectOrder={startOrder} />;
   }
 
   return (
@@ -450,6 +470,7 @@ export default function Home() {
       setRating={setRating}
       onEnterChat={() => setView("chat")}
       onSuccess={() => setView("success")}
+      productIndex={currentProductIndex}
     />
   );
 }
