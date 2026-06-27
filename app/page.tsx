@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Camera,
-  ChevronDown,
-  ChevronRight,
-  Image as ImageIcon,
-  Mic,
-  Send,
-  Star,
-  X
-} from "lucide-react";
+import { ArrowLeft, Camera, ChevronDown, Image as ImageIcon, Mic, Send, Star, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 
@@ -38,12 +28,12 @@ const ratingLabels = ["非常差", "较差", "一般", "推荐", "超赞"];
 
 const products = [
   {
-    title: "24 春夏条纹衬衫 长袖",
-    meta: "黑白条纹 / M码",
-    image: "/dress.svg"
+    title: "24春夏条纹衬衫 长袖",
+    meta: "蓝白条纹 / M码",
+    image: "/product-shirt.jpg"
   },
   {
-    title: "简约纯棉圆领 T 恤",
+    title: "简约纯棉圆领T恤",
     meta: "白色 / M码",
     image: "/dress.svg"
   },
@@ -112,7 +102,7 @@ function ProductCard({ collapsed = false, productIndex = 0 }: { collapsed?: bool
   return (
     <div className={collapsed ? "product productCollapsed" : "product"}>
       <div className="productThumb">
-        <Image src={product.image} width={52} height={66} alt="" priority />
+        <Image src={product.image} width={60} height={76} alt={product.title} priority />
       </div>
       <div className="productInfo">
         <strong>{product.title}</strong>
@@ -132,45 +122,56 @@ function ClassicPage({
   setRating: (value: number) => void;
   onEnterChat: () => void;
 }) {
+  const [reviewText, setReviewText] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+
   return (
     <PhoneFrame>
       <header className="topbar">
         <button className="iconButton" aria-label="返回">
-          <ArrowLeft size={24} />
+          <ArrowLeft size={22} />
         </button>
         <h1>发表评价</h1>
-        <button className="ghostButton" onClick={onEnterChat}>
-          逛 ai 评
+        <button className="ghostButton" type="button" onClick={onEnterChat}>
+          AI写评
         </button>
       </header>
       <ProductCard />
       <section className="classicBody">
         <div className="sectionTitle">给这单打个分</div>
         <RatingPicker value={rating} onChange={setRating} />
-        <textarea className="reviewArea" placeholder="分享你的真实体验吧" maxLength={1000} />
-        <div className="count">0/1000</div>
-        <button className="uploadButton" type="button">
-          <Camera size={20} />
-          添加图/视频
-        </button>
-        <button className="aiEntry" type="button" onClick={onEnterChat}>
-          <span>
-            <strong>和小评聊聊这单</strong>
-            <em>小评只提问引导，不会替你写评价</em>
-          </span>
-          <ChevronRight size={20} />
-        </button>
+        <div className="reviewPanel">
+          <textarea
+            className="reviewArea"
+            value={reviewText}
+            placeholder="宝贝满足你的期待吗？分享你的真实体验吧"
+            maxLength={1000}
+            onChange={(event) => setReviewText(event.target.value)}
+          />
+          <div className="count">{reviewText.length}/1000</div>
+          <button className="uploadButton" type="button">
+            <Camera size={20} />
+            添加图片/视频
+          </button>
+        </div>
         <div className="publicRow">
           <span>
             <strong>公开评价</strong>
-            <em>开启后其他用户可看到</em>
+            <em>关闭后仅商家可见</em>
           </span>
-          <button className="switchOn" aria-label="公开评价已开启" />
+          <button
+            className={isPublic ? "switch switchOn" : "switch"}
+            type="button"
+            role="switch"
+            aria-checked={isPublic}
+            aria-label={isPublic ? "公开评价已开启" : "公开评价已关闭"}
+            onClick={() => setIsPublic((current) => !current)}
+          />
         </div>
       </section>
       <div className="bottomCta">
         <button className="primaryButton" type="button">
-          提交评价
+          提交
         </button>
       </div>
     </PhoneFrame>
@@ -271,7 +272,7 @@ function ChatPage({
     const file = event.target.files?.[0];
     if (!file) return;
     setMediaPreview(URL.createObjectURL(file));
-    addAssistant("太好了！实物图很参考～还有其他想补充的吗？", "media");
+    addAssistant("太好了！实物图很有参考，是否还有其他想补充的？", "media");
   }
 
   function handleSubmitReview() {
@@ -286,10 +287,10 @@ function ChatPage({
     <PhoneFrame>
       <header className="topbar">
         <button className="iconButton" aria-label="返回" onClick={onBack}>
-          <ArrowLeft size={24} />
+          <ArrowLeft size={22} />
         </button>
         <h1>和小评聊这单</h1>
-        <button className="ghostButton" onClick={onBack}>
+        <button className="ghostButton" type="button" onClick={onBack}>
           返回
         </button>
       </header>
@@ -311,11 +312,7 @@ function ChatPage({
             </button>
           </div>
         )}
-        {isUseful && (
-          <div className="qualityPill">
-            已满足有用评价候选标准：10 字 + 1 个有用维度
-          </div>
-        )}
+        {isUseful && <div className="qualityPill">已满足有用评价候选标准：10 字 + 1 个有用维度</div>}
       </section>
       <div className="composer">
         <button className="iconButton" aria-label="语音输入">
@@ -352,7 +349,7 @@ function SuccessPage({ onNext }: { onNext: () => void }) {
     <PhoneFrame>
       <header className="topbar">
         <button className="iconButton" aria-label="返回">
-          <ArrowLeft size={24} />
+          <ArrowLeft size={22} />
         </button>
         <h1>评价已提交</h1>
         <span className="topSpacer" />
@@ -364,18 +361,18 @@ function SuccessPage({ onNext }: { onNext: () => void }) {
           <div className="avatar">小</div>
           <div>
             <strong>小评</strong>
-            <p>你的评价已提交成功～你还有 2 个待评价订单，要不要继续聊下一单？</p>
+            <p>你的评价已提交成功，你还有 2 个待评价订单，要不要继续聊下一单？</p>
           </div>
         </div>
       </section>
       <section className="nextOrders">
         <div className="ordersHead">
-          <strong>待评价订单 (2)</strong>
+          <strong>待评价订单(2)</strong>
           <span>查看全部</span>
         </div>
         {products.slice(1).map((product) => (
           <div className="orderRow" key={product.title}>
-            <Image src={product.image} width={42} height={54} alt="" />
+            <Image src={product.image} width={42} height={54} alt={product.title} />
             <span>
               <strong>{product.title}</strong>
               <em>{product.meta}</em>

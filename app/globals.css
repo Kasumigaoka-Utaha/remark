@@ -1,13 +1,13 @@
 :root {
-  --bg: #f6f6f2;
-  --paper: #fffdfa;
-  --ink: #282725;
-  --muted: #8e8984;
-  --line: #efebe7;
-  --pink: #d94f69;
-  --coral: #ea7a43;
-  --soft: #faeeee;
-  --green: #5f8f76;
+  --bg: #f7f7f7;
+  --paper: #ffffff;
+  --ink: #222222;
+  --muted: #969696;
+  --line: #eeeeee;
+  --pink: #ff0b64;
+  --coral: #ff7a36;
+  --soft: #fff2f5;
+  --green: #35c96f;
 }
 
 * {
@@ -21,9 +21,7 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(circle at 20% 15%, rgba(234, 122, 67, 0.12), transparent 28%),
-    linear-gradient(135deg, #fbfaf6 0%, #f3f6f3 45%, #fbf1ef 100%);
+  background: #f3f3f3;
   color: var(--ink);
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -52,24 +50,25 @@ button {
   height: min(844px, calc(100vh - 48px));
   min-height: 720px;
   overflow: hidden;
-  background: rgba(255, 253, 250, 0.96);
-  border: 1px solid rgba(224, 216, 210, 0.86);
+  background: var(--bg);
+  border: 1px solid rgba(220, 220, 220, 0.86);
   border-radius: 34px;
-  box-shadow: 0 24px 80px rgba(79, 62, 52, 0.18);
+  box-shadow: 0 24px 80px rgba(28, 28, 28, 0.16);
 }
 
 .topbar {
-  height: 72px;
+  height: 64px;
   display: grid;
-  grid-template-columns: 46px 1fr 70px;
+  grid-template-columns: 46px 1fr 74px;
   align-items: center;
-  padding: 18px 18px 0;
+  padding: 16px 16px 0;
+  background: var(--paper);
 }
 
 .topbar h1 {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -90,14 +89,15 @@ button {
 }
 
 .ghostButton {
-  min-width: 58px;
+  min-width: 62px;
   justify-self: end;
-  padding: 7px 10px;
-  border: 1px solid #eadbd7;
-  border-radius: 10px;
-  color: #b46c70;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  color: #f43f5e;
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.76);
+  font-weight: 600;
+  background: transparent;
 }
 
 .topSpacer {
@@ -107,10 +107,11 @@ button {
 .product {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 4px 22px 0;
-  padding: 12px 0 14px;
-  border-bottom: 1px solid var(--line);
+  gap: 10px;
+  margin: 0;
+  padding: 10px 18px 12px;
+  background: var(--paper);
+  border-bottom: 1px solid #f3f3f3;
 }
 
 .productCollapsed {
@@ -118,13 +119,19 @@ button {
 }
 
 .productThumb {
-  width: 52px;
-  height: 66px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  border-radius: 8px;
-  background: #f4f1ea;
+  border-radius: 6px;
+  background: #f2f2f2;
+}
+
+.productThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .productInfo {
@@ -141,29 +148,33 @@ button {
 }
 
 .productInfo strong {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .productInfo span {
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .classicBody {
-  padding: 26px 24px 150px;
+  padding: 16px 14px 150px;
+  background: var(--paper);
 }
 
 .sectionTitle {
-  margin-bottom: 20px;
-  font-size: 15px;
-  font-weight: 700;
+  margin-bottom: 12px;
+  color: #333333;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .rating {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .ratingCompact {
@@ -174,12 +185,12 @@ button {
   min-width: 0;
   border: 0;
   background: transparent;
-  color: #c9c6c1;
+  color: #b9b9b9;
   display: grid;
   justify-items: center;
-  gap: 7px;
+  gap: 6px;
   padding: 0;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .ratingButton span {
@@ -187,20 +198,27 @@ button {
 }
 
 .ratingActive {
-  color: var(--coral);
+  color: #ff6b6b;
   font-weight: 700;
+}
+
+.reviewPanel {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #f8f8f8;
 }
 
 .reviewArea {
   width: 100%;
-  height: 128px;
-  margin-top: 30px;
+  height: 142px;
   border: 0;
   resize: none;
   outline: none;
   background: transparent;
   color: var(--ink);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .reviewArea::placeholder {
@@ -209,53 +227,36 @@ button {
 
 .count {
   text-align: right;
-  color: #aaa49d;
-  font-size: 13px;
+  color: #b5b5b5;
+  font-size: 11px;
 }
 
-.uploadButton,
-.aiEntry {
+.uploadButton {
   display: flex;
   align-items: center;
   border: 0;
   background: transparent;
-}
-
-.uploadButton {
   gap: 8px;
-  margin-top: 24px;
+  margin-top: 10px;
   padding: 0;
-  color: #4b4946;
-  font-size: 14px;
-  font-weight: 700;
+  color: #696969;
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.aiEntry {
-  width: 100%;
-  justify-content: space-between;
-  margin-top: 26px;
-  padding: 13px 14px;
-  border-radius: 8px;
-  background: #fff5ef;
-  box-shadow: inset 0 0 0 1px #f3ded3;
-  text-align: left;
-}
-
-.aiEntry span,
 .publicRow span {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
-.aiEntry strong,
 .publicRow strong {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.aiEntry em,
 .publicRow em {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-style: normal;
 }
 
@@ -263,25 +264,39 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 30px;
+  margin-top: 16px;
+  padding: 14px 0;
+  border-top: 1px solid #f4f4f4;
+}
+
+.switch {
+  width: 44px;
+  height: 24px;
+  padding: 2px;
+  border: 0;
+  border-radius: 20px;
+  background: #dddddd;
+  transition: background 0.18s ease;
+}
+
+.switch::after {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+  transform: translateX(0);
+  transition: transform 0.18s ease;
 }
 
 .switchOn {
-  width: 45px;
-  height: 26px;
-  border: 0;
-  border-radius: 20px;
-  background: linear-gradient(90deg, #df596c, #dc9b71);
+  background: var(--green);
 }
 
 .switchOn::after {
-  content: "";
-  display: block;
-  width: 22px;
-  height: 22px;
-  margin: 2px 2px 2px auto;
-  border-radius: 50%;
-  background: #fff;
+  transform: translateX(20px);
 }
 
 .bottomCta {
@@ -289,8 +304,9 @@ button {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 18px 24px 28px;
-  background: linear-gradient(180deg, rgba(255, 253, 250, 0), var(--paper) 24%);
+  padding: 14px 18px 28px;
+  background: var(--paper);
+  border-top: 1px solid #f0f0f0;
 }
 
 .primaryButton {
@@ -299,8 +315,8 @@ button {
   border: 0;
   border-radius: 25px;
   color: #fff;
-  background: linear-gradient(90deg, var(--coral), var(--pink));
-  font-size: 16px;
+  background: linear-gradient(90deg, #ff7b38, #ff0b64);
+  font-size: 15px;
   font-weight: 700;
   box-shadow: 0 10px 24px rgba(217, 79, 105, 0.22);
 }
