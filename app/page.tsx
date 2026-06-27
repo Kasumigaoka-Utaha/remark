@@ -45,6 +45,7 @@ const products = [
 ];
 
 const initialPrompt = "先给这单打个分吧，我会根据评分继续问几个细节。";
+const assistantAvatar = "/xiaoping-avatar.svg";
 
 function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -198,7 +199,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
     <div className={isUser ? "message messageUser" : "message"}>
       {!isUser && (
         <div className="avatar avatarPhoto" aria-hidden="true">
-          <Image src="/xiaoping-avatar.png" width={34} height={34} alt="" />
+          <Image src={assistantAvatar} width={34} height={34} alt="" />
         </div>
       )}
       <div className={isUser ? "bubble userBubble" : "bubble"}>
@@ -220,9 +221,10 @@ function ChatPage({
   onBack: () => void;
   onSuccess: () => void;
 }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [introMessages] = useState<ChatMessage[]>([
     { id: "init", role: "assistant", text: initialPrompt, kind: "prompt" }
   ]);
+  const [postRatingMessages, setPostRatingMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [questionRound, setQuestionRound] = useState(0);
   const [mediaPromptShown, setMediaPromptShown] = useState(false);
@@ -233,18 +235,18 @@ function ChatPage({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function addAssistant(text: string, kind: ChatMessage["kind"] = "prompt") {
-    setMessages((current) => [...current, { id: createId("assistant"), role: "assistant", text, kind }]);
+    setPostRatingMessages((current) => [...current, { id: createId("assistant"), role: "assistant", text, kind }]);
   }
 
   function handleRating(value: number) {
     setRating(value);
     setHasRated(true);
-    setMessages((current) => {
-      const withoutPreviousRating = current.filter((message) => message.kind !== "rating");
+    setPostRatingMessages((current) => {
+      const afterFirstPrompt = current.filter((message) => message.kind !== "rating" && message.kind !== "prompt");
       return [
-        ...withoutPreviousRating,
         { id: createId("rating"), role: "user", text: ratingMessage(value), kind: "rating" },
-        { id: createId("assistant"), role: "assistant", text: ratingFollowup(value), kind: "prompt" }
+        { id: createId("assistant"), role: "assistant", text: ratingFollowup(value), kind: "prompt" },
+        ...afterFirstPrompt
       ];
     });
   }
@@ -253,8 +255,8 @@ function ChatPage({
     const text = input.trim();
     if (!text || isChecking) return;
 
-    const nextMessages: ChatMessage[] = [...messages, { id: createId("user"), role: "user", text }];
-    setMessages(nextMessages);
+    const nextMessages: ChatMessage[] = [...postRatingMessages, { id: createId("user"), role: "user", text }];
+    setPostRatingMessages(nextMessages);
     setInput("");
     setIsChecking(true);
 
@@ -305,13 +307,16 @@ function ChatPage({
       </header>
       <ProductCard collapsed className="chatProduct" />
       <section className="chatScroll">
-        {messages.map((message) => (
+        {introMessages.map((message) => (
           <ChatBubble key={message.id} message={message} />
         ))}
         <div className="inlinePanel ratingPanel">
           <span>给这单打个分</span>
           <RatingPicker value={rating} onChange={handleRating} compact />
         </div>
+        {postRatingMessages.map((message) => (
+          <ChatBubble key={message.id} message={message} />
+        ))}
         {mediaPreview && (
           <div className="mediaPreview">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -374,7 +379,7 @@ function SuccessPage({ onNext }: { onNext: () => void }) {
         <h2>感谢你的真实分享！</h2>
         <div className="successBubble">
           <div className="avatar avatarPhoto">
-            <Image src="/xiaoping-avatar.png" width={34} height={34} alt="" />
+            <Image src={assistantAvatar} width={34} height={34} alt="" />
           </div>
           <div>
             <strong>小评</strong>
